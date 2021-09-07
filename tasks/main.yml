@@ -1,0 +1,36 @@
+---
+
+# Include variables and define needed variables.
+- name: Include OS-specific variables.
+  include_vars: "{{ ansible_os_family | lower}}.yml"
+  tags:
+    - include-vars
+
+# Setup/install tasks.
+- include_tasks:  "install-{{ ansible_os_family | lower }}.yml"
+  tags:
+    - include-tasks
+
+# Config tasks.
+- include_tasks:  'config-{{ ansible_os_family | lower }}.yml'
+  tags:
+    - config ec2
+
+# Config tasks.
+- include_tasks:  'config-non-ec2.yml'
+  when: aws_cw_agent_type !='ec2'
+  tags:
+    - config non ec2
+
+
+# Get the version and status of Cloudwatch Agent
+- name: Information about cloudwatch agent
+  command: sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -m ec2 -a status
+  register: cloudwatchagentinfo
+  when: ansible_os_family != "Windows"
+
+- debug:
+    msg: "{{ cloudwatchagentinfo.stdout_lines }}"
+
+
+

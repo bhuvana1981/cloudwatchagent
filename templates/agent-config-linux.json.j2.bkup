@@ -1,0 +1,111 @@
+
+# The agent section includes fields for the overall configuration of the agent
+
+#metrics_collection_interval – Optional. Specifies how often all metrics specified in this configuration file are to be collected
+#The default value is 60
+
+#region – Specifies the Region to use for the CloudWatch endpoint when an Amazon EC2 instance is being monitored
+
+#logfile – Specifies the location where the CloudWatch agent writes log messages
+#Linux: /opt/aws/amazon-cloudwatch-agent/logs/amazon-cloudwatch-agent.log
+
+{
+  "agent": {
+    "metrics_collection_interval": {{ aws_cw_collection_interval }},
+    "region": "{{ aws_cw_region }}",
+    "logfile": "{{ aws_cw_agent_log_file }}",
+    "debug": {{ aws_cw_log_debug | bool | lower }}
+          },
+
+# The metrics section specifies the custom metrics for collection and publishing to CloudWatch
+# metrics_collected – Required. Specifies which metrics are to be collected, including custom metrics collected through StatsD or collectd
+
+
+  "metrics": {
+    "namespace": "{{ aws_cw_namespace }}",
+    "metrics_collected": {
+      "cpu": {
+        "resources": [
+          "*"
+        ],
+        "measurement": [
+          {"name": "cpu_usage_idle", "rename": "CPU_USAGE_IDLE", "unit": "Percent"},
+          {"name": "cpu_usage_nice", "unit": "Percent"},
+          "cpu_usage_guest"
+        ],
+        "totalcpu": true,
+        "metrics_collection_interval": {{ aws_cw_collection_interval  }}
+      },
+     "swap": {
+        "measurement": [
+          "swap_used",
+          "swap_free",
+          "swap_used_percent"
+        ]
+      },
+      "mem": {
+        "measurement": [
+          "mem_used",
+          "mem_cached",
+          "mem_total"
+        ],
+        "metrics_collection_interval": {{ aws_cw_collection_interval  }}
+      },
+      "net": {
+        "resources": [
+          "*"
+        ],
+        "measurement": [
+          "bytes_sent",
+          "bytes_recv",
+          "drop_in",
+          "drop_out"
+        ]
+      },
+      "netstat": {
+        "measurement": [
+          "tcp_established",
+          "tcp_syn_sent",
+          "tcp_close"
+        ],
+        "metrics_collection_interval": {{ aws_cw_collection_interval }}
+      },
+      "processes": {
+        "measurement": [
+          "running",
+          "sleeping",
+          "dead"
+        ]
+      }
+    }
+  }{% if aws_cw_logfiles|length > 0 %},
+
+
+# The logs section specifies what log files are published to CloudWatch Logs
+
+# logs_collected – Required if the logs section is included. Specifies which log files and Windows event logs are to be collected from the server
+# files – Specifies which regular log files the CloudWatch agent is to collect
+# collect_list – Required if files is included. Contains an array of entries, each of which specifies one log file to collect
+# file_path – Specifies the path of the log file to upload to CloudWatch Logs
+
+
+
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {% for logfile in aws_cw_logfiles %}
+          {
+            "file_path": "{{ logfile.path }}",
+            "log_group_name": "{{ logfile.log_group }}",
+            "log_stream_name": "{instance_id}/{local_hostname}",
+            "timestamp_format": "{{logfile.timestamp_format}}"
+          }{% if not loop.last %},{% endif %}
+          {% endfor %}
+
+        ]
+      }
+    }
+  }
+  {% endif %}
+}

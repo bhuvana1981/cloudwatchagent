@@ -1,0 +1,26 @@
+---
+  - name: Configure Linux Agent
+    block:
+      - name: deploy Linux agent configuration
+        template:
+          src: "{{ item }}"
+          dest: "{{ aws_cw_agent_config_file }}"
+          mode: 0644
+        with_first_found:
+          - files:
+              - "{{ aws_cw_config_template }}"
+        tags:
+          - config
+        register: config
+
+      - name: start cloudwatch agent
+        command: |
+          ./amazon-cloudwatch-agent-ctl \
+              -a fetch-config \
+              -m {{ aws_cw_agent_type }} \
+              -c file:{{ aws_cw_agent_config_file }} \
+              -s
+        args:
+          chdir: "{{ aws_cw_root }}/bin"
+        when: config is changed
+    when: ansible_os_family != "Windows"

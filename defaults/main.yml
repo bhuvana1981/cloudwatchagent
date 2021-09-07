@@ -1,0 +1,99 @@
+---
+# Default  
+
+# description: AWS Region where you want the AWS CloudWatch Logs
+
+# Specifies the Region to use for the CloudWatch endpoint when an Amazon EC2 instance is being monitored. 
+# The metrics collected are sent to this Region, such as us-west-1. If you omit this field, the agent 
+# sends metrics to the Region where the Amazon EC2 instance is located.
+# If you are monitoring an on-premises server, this field isn't used, 
+# and the agent reads the Region from the AmazonCloudWatchAgent profile of the AWS configuration file.
+
+aws_cw_region: us-east-1
+
+# description: Define if the agent is running on AWS EC2 instance or outside AWS, in your On Premise infrastructure
+# possible values:
+# - "ec2"
+# - "onPremise"
+# default value: "ec2"
+# notes:
+# * when you set the value 'onPremise' is because you installed the agent outside AWS, so is necessary to set the variables "aws_cw_region" also
+
+aws_cw_agent_type: 'ec2'
+
+
+# Profile
+# description: Path where is the AWS CLI Profile folder ( .aws/ with .aws/config and .aws/credentials files)
+# possible values:
+# - https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/install-CloudWatch-Agent-commandline-fleet.html
+# default value: "AmazonCloudWatchAgent"
+# notes:
+# * This is necessary when use **aws_cw_agent_type** "ec2" and you are not using the EC2 Instance Role to get access to the AWS CloudWatch Logs / AWS CloudWatch Service
+# * Obligatory when you use **aws_cw_agent_type:** "onPremise", this is the only way to get access to the AWS CloudWatch Logs / AWS CloudWatch Service
+aws_cw_agent_profile_template: 'agent-profile.j2'
+
+# Path where the aws profile template to be copied for non-ec2 instances
+aws_cw_agent_profile_path: '/root/.aws/credentials'
+
+# CloudWatch agent includes a configuration file called common-config.toml. You can optionally use this file to specify proxy and Region information.
+# On a server running Linux, this file is in the /opt/aws/amazon-cloudwatch-agent/etc directory. On a server running Windows Server,
+# this file is in the C:\ProgramData\Amazon\AmazonCloudWatchAgent directory.
+aws_cw_agent_common_template: 'common-config.toml.j2'
+aws_cw_agent_common_conf_path: /opt/aws/amazon-cloudwatch-agent/etc/ # used for non-ec2 servers
+aws_cw_agent_common_conf_file: " {{ aws_cw_agent_common_conf_path }}/common-config.toml"
+
+# Path to download the cloudwatch agent
+aws_cw_package_path: https://s3.amazonaws.com/amazoncloudwatch-agent
+
+# Cloud watch agent configuration files and directory information
+
+# cloud watch agent path 
+aws_cw_root: /opt/aws/amazon-cloudwatch-agent
+
+#Manually created cloud watch config template for linux server
+aws_cw_config_template: 'agent-config-linux.json.j2'
+
+#Cloud watch agent config file - Manualy created config template file (aws_cw_config_template) to be copied to below file
+aws_cw_agent_config_file: "{{ aws_cw_root }}/amazon-cloudwatch-agent.json" 
+
+# Cloud watch agent service name
+aws_cw_agent_service: amazon-cloudwatch-agent
+
+
+# Monitoring related information. These will be used in cloud watch agent configuration file.
+aws_cw_namespace: CWAgent
+aws_cw_collection_interval: 60
+aws_cw_agent_log_file: "{{ aws_cw_root }}/logs/amazon-cloudwatch-agent.log"
+
+# Specify the logfiles and destination log group for linux server
+aws_cw_logfiles: 
+    - path: /var/log/messages
+      timestamp_format: "%b %d %H:%M:%S"
+      log_group: "messages1"
+    - path: /var/log/secure
+      timestamp_format: "%b %d %H:%M:%S"
+      log_group: "secure1"   
+    - path: /etc/tomcat8/logs/catalina.out
+      timestamp_format: "%b %d %H:%M:%S"
+      log_group: "tomocat1"    
+# Specify the logfiles and destination log group for Windows server     
+aws_cw_windows_events: 
+        - name: 'System'
+          levels: [ 'ERROR', 'CRITICAL' ]
+          format: 'text'
+          log_group: 'Windows/System'            
+        - name: 'Application'
+          levels: ['ERROR']
+          format: 'text'
+          log_group: 'Windows/Application' 
+
+# Optional. Specifies running the CloudWatch agent with debug log messages. The default value is false.
+aws_cw_log_debug: false
+
+# AWS Credential information to send data to cloudwatch.
+aws_access_key: ''
+aws_secret_key: ''
+aws_region: "{{ aws_cw_region }}"
+aws_profile: 'AmazonCloudWatchAgent'
+aws_profile_path: '/root/.aws/credentials'
+

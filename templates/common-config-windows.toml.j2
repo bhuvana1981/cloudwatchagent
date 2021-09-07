@@ -1,0 +1,22 @@
+# This common-config is used to configure items used for both ssm and cloudwatch access
+
+
+## Configuration for shared credential.
+## Default credential strategy will be used if it is absent here:
+## 	Instance role is used for EC2 case by default.
+##	AmazonCloudWatchAgent profile is used for onPremise case by default.
+# [credentials]
+#    shared_credential_profile = "{profile_name}"
+#    shared_credential_file = "{file_name}"
+
+
+{% if aws_profile or aws_profile_path %}
+[credentials]
+  {% if aws_profile %} 
+    shared_credential_profile = "{{ aws_profile }}"
+  {% endif %}  
+  {% if aws_profile_path %}  
+    shared_credential_file = "{{ aws_profile_path }}"
+  {% endif %}
+{% endif %}
+
